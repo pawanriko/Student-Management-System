@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Management System — Web UI</title>
+    <meta name="description" content="A web interface for the Student Management System: add, search, update, delete and analyse student records. Data stays compatible with the C++ version's students.txt.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        /* ============================================================
+           NEO-BRUTALIST POP — the SMS web UI's own identity.
+           Stark white, thick black borders, hard black shadows,
+           candy colour blocks, chunky type. Not paper-editorial,
+           not blueprint, not glass.
+           ============================================================ */
+
+        :root {
+            --bg: #fffdf7;
+            --card: #ffffff;
+            --ink: #111111;
+            --muted: #5c5c54;
+            --yellow: #ffcf3f;
+            --pink: #ff90e8;
+            --green: #8fe3ae;
+            --blue: #9db9ff;
+            --red: #ff6b6b;
+            --border: 2px solid #111111;
+            --border-thick: 2.5px solid #111111;
+            --shadow: 6px 6px 0 #111111;
+            --shadow-sm: 4px 4px 0 #111111;
+            --ease: cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--ink);
+            min-height: 100vh;
+        }
+
+        ::selection { background: var(--pink); color: var(--ink); }
+
+        button, input, select { font-family: inherit; }
+
+        .wrap {
+            max-width: 1160px;
+            margin: 0 auto;
+            padding: 1.8rem 1.5rem 3rem;
+        }
+
+        /* ---------- header ---------- */
+
+        header.top {
+            display: flex;
+            align-items: center;
+            gap: 1.1rem;
+            flex-wrap: wrap;
+            padding-bottom: 1.4rem;
+            margin-bottom: 1.6rem;
+        }
+
+        .brand {
+            font-family: "Archivo", "Inter", sans-serif;
+            font-size: 1.75rem;
+            font-weight: 900;
+            letter-spacing: -0.01em;
+            text-transform: uppercase;
+            line-height: 1.1;
+        }
+
+        .brand em {
+            font-style: normal;
+            background: var(--yellow);
+            border: var(--border);
+            box-shadow: 3px 3px 0 #111111;
+            padding: 0 0.28em;
+            display: inline-block;
+            transform: rotate(-1.2deg);
+        }
+
+        .tagline { color: var(--muted); font-size: 0.95rem; margin-top: 0.4rem; font-weight: 500; }
+
+        .credit {
+            margin-left: auto;
+        }
+
+        .credit .sticker {
+            display: inline-block;
+            background: var(--pink);
+            border: var(--border);
+            box-shadow: var(--shadow-sm);
+            padding: 0.4rem 0.8rem;
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            transform: rotate(2deg);
+        }
+
+        /* ---------- stat cards ---------- */
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 820px) {
+            .stats { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        .stat-card {
+            border: var(--border-thick);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            padding: 1.1rem 1.2rem 1.2rem;
+        }
+
+        .stat-card:nth-child(1) { background: var(--yellow); }
+        .stat-card:nth-child(2) { background: #ffc7ec; }
+        .stat-card:nth-child(3) { background: var(--green); }
+        .stat-card:nth-child(4) { background: var(--blue); }
+
+        .stat-card .k {
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.64rem;
+            font-weight: 600;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            margin-bottom: 0.45rem;
+        }
+
+        .stat-card .v {
+            font-family: "Archivo", "Inter", sans-serif;
+            font-size: 2.3rem;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+            line-height: 1;
+        }
+
+        .stat-card .sub {
+            font-size: 0.84rem;
+            font-weight: 500;
+            margin-top: 0.4rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            opacity: 0.75;
+        }
+
+        /* ---------- toolbar ---------- */
+
+        .toolbar {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .toolbar .grow { flex: 1; min-width: 180px; }
+
+        input[type="text"], input[type="number"], select {
+            background: var(--card);
+            border: var(--border);
+            color: var(--ink);
+            padding: 0.62rem 0.85rem;
+            border-radius: 10px;
+            outline: none;
+            font: inherit;
+            font-weight: 500;
+            transition: box-shadow 0.15s ease, transform 0.15s ease;
+            width: 100%;
+        }
+
+        input:focus, select:focus {
+            box-shadow: var(--shadow-sm);
+        }
+
+        input:disabled {
+            opacity: 0.55;
+            background: #e8e4d8;
+        }
+
+        select { cursor: pointer; width: auto; }
+        .toolbar input[type="text"] { width: 100%; }
+
+        .btn {
+            border: var(--border);
+            background: var(--card);
+            color: var(--ink);
+            padding: 0.62rem 1.2rem;
+            border-radius: 999px;
+            cursor: pointer;
+            font: inherit;
+            font-weight: 700;
+            font-size: 0.92rem;
+            white-space: nowrap;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.15s var(--ease), box-shadow 0.15s var(--ease), background 0.15s ease;
+        }
+
+        .btn:hover { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 #111111; }
+        .btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 #111111; }
+
+        .btn.primary {
+            background: var(--yellow);
+        }
+
+        .btn.danger {
+            background: var(--red);
+            color: #2b0606;
+        }
+
+        .btn.small { padding: 0.36rem 0.85rem; font-size: 0.85rem; box-shadow: 3px 3px 0 #111111; }
+        .btn.small:hover { box-shadow: 4px 4px 0 #111111; }
+
+        /* ---------- layout ---------- */
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1.9fr 1fr;
+            gap: 1.4rem;
+            align-items: start;
+        }
+
+        @media (max-width: 900px) {
+            .grid { grid-template-columns: 1fr; }
+        }
+
+        .card {
+            background: var(--card);
+            border: var(--border-thick);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .card-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 0.95rem 1.2rem;
+            border-bottom: var(--border-thick);
+            background: var(--card);
+        }
+
+        .card-head h2 {
+            font-family: "Archivo", "Inter", sans-serif;
+            font-size: 1.02rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.01em;
+        }
+
+        .card-head .hint {
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--ink);
+            background: var(--green);
+            border: var(--border);
+            border-radius: 999px;
+            padding: 0.18rem 0.6rem;
+            letter-spacing: 0.05em;
+            white-space: nowrap;
+        }
+
+        .side { display: flex; flex-direction: column; gap: 1.4rem; }
+
+        /* ---------- table ---------- */
+
+        .table-scroll { overflow-x: auto; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 0.8rem 1.2rem;
+            border-bottom: 1px solid rgba(17, 17, 17, 0.22);
+            white-space: nowrap;
+        }
+
+        th {
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.66rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            font-weight: 600;
+            background: var(--yellow);
+            border-bottom: var(--border-thick);
+        }
+
+        tbody tr { transition: background 0.12s ease; }
+        tbody tr:hover { background: #fff7dd; }
+        tbody tr:last-child td { border-bottom: none; }
+
+        td.id { font-family: "JetBrains Mono", monospace; font-weight: 700; }
+        td.name { font-weight: 700; }
+
+        .row-actions { display: flex; gap: 0.5rem; }
+
+        .empty-state {
+            padding: 2.6rem 1.5rem;
+            text-align: center;
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        .empty-state .big { font-size: 1.6rem; margin-bottom: 0.4rem; }
+
+        /* ---------- form ---------- */
+
+        .form { padding: 1.15rem 1.2rem 1.25rem; display: flex; flex-direction: column; gap: 0.9rem; }
+
+        .form label {
+            display: block;
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.64rem;
+            font-weight: 600;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            margin-bottom: 0.35rem;
+        }
+
+        .form .two { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; }
+
+        .form-error {
+            display: none;
+            background: #ffe1e1;
+            border: var(--border);
+            border-left: 8px solid var(--red);
+            border-radius: 8px;
+            color: #8f1414;
+            padding: 0.6rem 0.8rem;
+            font-size: 0.88rem;
+            font-weight: 600;
+        }
+
+        .form-error.show { display: block; }
+
+        /* ---------- statistics ---------- */
+
+        .stats-body { padding: 1.15rem 1.2rem 1.25rem; }
+
+        .course-row {
+            display: grid;
+            grid-template-columns: 92px 1fr 2rem;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 0.75rem;
+            font-size: 0.9rem;
+        }
+
+        .course-row .cname {
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .bar-track {
+            height: 14px;
+            background: #ffffff;
+            border: var(--border);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            display: block;
+            height: 100%;
+            background: var(--pink);
+            transition: width 0.6s var(--ease);
+        }
+
+        .course-row .ccount {
+            font-family: "JetBrains Mono", monospace;
+            font-weight: 700;
+            text-align: right;
+        }
+
+        .stats-note { color: var(--muted); font-size: 0.88rem; font-weight: 500; }
+
+        /* ---------- modal + toast ---------- */
+
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(17, 17, 17, 0.45);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            padding: 1rem;
+        }
+
+        .modal-backdrop.open { display: flex; }
+
+        .modal {
+            background: var(--card);
+            border: var(--border-thick);
+            border-radius: 18px;
+            padding: 1.6rem;
+            max-width: 420px;
+            width: 100%;
+            box-shadow: 9px 9px 0 #111111;
+        }
+
+        .modal h3 {
+            font-family: "Archivo", "Inter", sans-serif;
+            font-size: 1.25rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            margin-bottom: 0.6rem;
+        }
+
+        .modal p { color: var(--muted); margin-bottom: 1.3rem; line-height: 1.55; font-weight: 500; }
+        .modal .btns { display: flex; gap: 0.7rem; justify-content: flex-end; }
+
+        .toast {
+            position: fixed;
+            left: 50%;
+            bottom: 1.4rem;
+            transform: translate(-50%, 20px);
+            background: var(--yellow);
+            border: var(--border);
+            border-radius: 999px;
+            box-shadow: var(--shadow-sm);
+            color: var(--ink);
+            font-family: "JetBrains Mono", monospace;
+            font-size: 0.88rem;
+            font-weight: 600;
+            padding: 0.75rem 1.2rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease, transform 0.3s var(--ease);
+            z-index: 200;
+            max-width: 92vw;
+        }
+
+        .toast.show { opacity: 1; transform: translate(-50%, 0); }
+        .toast.error { background: var(--red); color: #2b0606; }
+
+        footer {
+            margin-top: 2.4rem;
+            padding-top: 1.15rem;
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.88rem;
+            font-weight: 500;
+        }
+
+        footer b { color: var(--ink); }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <header class="top">
+            <div>
+                <div class="brand">Student <em>Management</em> System</div>
+                <div class="tagline">The web face of the C++ console app — same records, same rules, prettier view.</div>
+            </div>
+            <div class="credit"><span class="sticker">Made by Pawan</span></div>
+        </header>
+
+        <!-- summary cards -->
+        <section class="stats" aria-label="Summary">
+            <div class="stat-card">
+                <div class="k">Total students</div>
+                <div class="v" id="stat-total">0</div>
+                <div class="sub">records on file</div>
+            </div>
+            <div class="stat-card">
+                <div class="k">Average age</div>
+                <div class="v" id="stat-avg">—</div>
+                <div class="sub">across all students</div>
+            </div>
+            <div class="stat-card">
+                <div class="k">Youngest</div>
+                <div class="v" id="stat-young">—</div>
+                <div class="sub" id="stat-young-sub">&nbsp;</div>
+            </div>
+            <div class="stat-card">
+                <div class="k">Oldest</div>
+                <div class="v" id="stat-old">—</div>
+                <div class="sub" id="stat-old-sub">&nbsp;</div>
+            </div>
+        </section>
+
+        <!-- toolbar -->
+        <div class="toolbar">
+            <div class="grow"><input type="text" id="search-input" placeholder="🔍  Search students…  (try a name like asha, or a course like BCA)" aria-label="Search students"></div>
+            <select id="search-by" aria-label="Search field">
+                <option value="any">Any field</option>
+                <option value="id">By ID</option>
+                <option value="name">By name</option>
+                <option value="course">By course</option>
+            </select>
+            <button class="btn" id="import-btn" title="Load a students.txt saved by the C++ app (or exported from here)">⬆ Import .txt</button>
+            <button class="btn" id="export-btn" title="Download students.txt — the C++ app can read this exact file">⬇ Export .txt</button>
+            <input type="file" id="import-file" accept=".txt,text/plain" hidden>
+        </div>
+
+        <div class="grid">
+            <!-- records table -->
+            <section class="card">
+                <div class="card-head">
+                    <h2 id="table-title">All students</h2>
+                    <span class="hint" id="table-hint">sorted by ID</span>
+                </div>
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Age</th>
+                                <th>Course</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody"></tbody>
+                    </table>
+                    <div class="empty-state" id="empty-state" hidden>
+                        <div class="big">🗂️</div>
+                        <div id="empty-text">No students yet — add the first one with the form.</div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="side">
+                <!-- add / edit form -->
+                <section class="card">
+                    <div class="card-head">
+                        <h2 id="form-title">Add a student</h2>
+                        <span class="hint" id="form-mode">NEW RECORD</span>
+                    </div>
+                    <form class="form" id="student-form" novalidate>
+                        <div class="form-error" id="form-error"></div>
+                        <div class="two">
+                            <div>
+                                <label for="f-id">Student ID</label>
+                                <input type="number" id="f-id" min="1" placeholder="e.g. 104">
+                            </div>
+                            <div>
+                                <label for="f-age">Age (1–120)</label>
+                                <input type="number" id="f-age" min="1" max="120" placeholder="e.g. 20">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="f-name">Full name</label>
+                            <input type="text" id="f-name" placeholder="e.g. Asha Verma">
+                        </div>
+                        <div>
+                            <label for="f-course">Course</label>
+                            <input type="text" id="f-course" placeholder="e.g. BCA">
+                        </div>
+                        <button type="submit" class="btn primary" id="form-submit">＋ Add student</button>
+                        <button type="button" class="btn" id="form-cancel" hidden>Cancel editing</button>
+                    </form>
+                </section>
+
+                <!-- statistics -->
+                <section class="card">
+                    <div class="card-head">
+                        <h2>Students per course</h2>
+                        <span class="hint">LIVE</span>
+                    </div>
+                    <div class="stats-body" id="course-stats">
+                        <p class="stats-note">No courses yet.</p>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <footer>Built by <b>Pawan</b> — records save in your browser and export to the same <b>students.txt</b> the C++ version uses.</footer>
+    </div>
+
+    <!-- delete confirmation -->
+    <div class="modal-backdrop" id="modal">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+            <h3 id="modal-title">Delete this student?</h3>
+            <p id="modal-text"></p>
+            <div class="btns">
+                <button class="btn" id="modal-cancel">Keep record</button>
+                <button class="btn danger" id="modal-confirm">Yes, delete</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast" role="status"></div>
+
+    <script>
+        "use strict";
+
+        /* ============================================================
+           Student Management System — web UI
+           A browser companion to StudentManagementSystem.cpp.
+           Same data (students.txt: id,name,age,course), same rules:
+           unique IDs, age 1-120, no commas inside name/course,
+           records always shown sorted by ID.
+           Records persist in this browser (localStorage) and can be
+           imported from / exported to the C++ app's students.txt.
+           ============================================================ */
+
+        const STORAGE_KEY = "sms-web-students-v1";
+
+        const DEMO = [
+            { id: 101, name: "Rahul Mehta", age: 20, course: "BTech CSE" },
+            { id: 102, name: "Asha Verma", age: 19, course: "BCA" },
+            { id: 103, name: "Kabir Singh", age: 21, course: "BCA" }
+        ];
+
+        let students = load();
+        let editingId = null;   // null = adding, otherwise the ID being edited
+        let pendingDelete = null;
+
+        // ---------- persistence ----------
+
+        function load() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw === null) return DEMO.slice(); // first visit: demo data
+                const parsed = JSON.parse(raw);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function save() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(students));
+        }
+
+        function sorted() {
+            return students.slice().sort((a, b) => a.id - b.id);
+        }
+
+        // ---------- tiny helpers ----------
+
+        const $ = (id) => document.getElementById(id);
+
+        function esc(s) {
+            return String(s).replace(/[&<>"']/g, (c) => ({
+                "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+            }[c]));
+        }
+
+        let toastTimer = null;
+        function toast(message, isError) {
+            const t = $("toast");
+            t.textContent = message;
+            t.classList.toggle("error", !!isError);
+            t.classList.add("show");
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => t.classList.remove("show"), 3200);
+        }
+
+        // ---------- rendering ----------
+
+        function currentFilter() {
+            const q = $("search-input").value.trim().toLowerCase();
+            const by = $("search-by").value;
+            if (!q) return sorted();
+            return sorted().filter((s) => {
+                if (by === "id") return String(s.id).includes(q);
+                if (by === "name") return s.name.toLowerCase().includes(q);
+                if (by === "course") return s.course.toLowerCase().includes(q);
+                return String(s.id).includes(q)
+                    || s.name.toLowerCase().includes(q)
+                    || s.course.toLowerCase().includes(q);
+            });
+        }
+
+        function render() {
+            renderSummary();
+            renderTable();
+            renderCourseStats();
+        }
+
+        function renderSummary() {
+            $("stat-total").textContent = students.length;
+            if (students.length === 0) {
+                $("stat-avg").textContent = "—";
+                $("stat-young").textContent = "—";
+                $("stat-old").textContent = "—";
+                $("stat-young-sub").innerHTML = "&nbsp;";
+                $("stat-old-sub").innerHTML = "&nbsp;";
+                return;
+            }
+            const avg = students.reduce((sum, s) => sum + s.age, 0) / students.length;
+            let young = students[0], old = students[0];
+            for (const s of students) {
+                if (s.age < young.age) young = s;
+                if (s.age > old.age) old = s;
+            }
+            $("stat-avg").textContent = avg.toFixed(1);
+            $("stat-young").textContent = young.age;
+            $("stat-young-sub").textContent = young.name;
+            $("stat-old").textContent = old.age;
+            $("stat-old-sub").textContent = old.name;
+        }
+
+        function renderTable() {
+            const rows = currentFilter();
+            const searching = $("search-input").value.trim() !== "";
+            $("table-title").textContent = searching ? "Search results" : "All students";
+            $("table-hint").textContent = searching
+                ? rows.length + " match(es)"
+                : "sorted by ID · " + students.length + " total";
+
+            const tbody = $("tbody");
+            tbody.innerHTML = rows.map((s) =>
+                "<tr>" +
+                '<td class="id">' + s.id + "</td>" +
+                '<td class="name">' + esc(s.name) + "</td>" +
+                "<td>" + s.age + "</td>" +
+                "<td>" + esc(s.course) + "</td>" +
+                '<td><div class="row-actions">' +
+                '<button class="btn small" data-edit="' + s.id + '">Edit</button>' +
+                '<button class="btn small danger" data-del="' + s.id + '">Delete</button>' +
+                "</div></td>" +
+                "</tr>"
+            ).join("");
+
+            $("empty-state").hidden = rows.length !== 0;
+            $("empty-text").textContent = searching
+                ? "No students match that search."
+                : "No students yet — add the first one with the form.";
+        }
+
+        function renderCourseStats() {
+            const box = $("course-stats");
+            if (students.length === 0) {
+                box.innerHTML = '<p class="stats-note">No courses yet.</p>';
+                return;
+            }
+            // Group case-insensitively, like the C++ app; keep the first spelling seen.
+            const groups = new Map();
+            for (const s of sorted()) {
+                const key = s.course.toLowerCase();
+                if (!groups.has(key)) groups.set(key, { label: s.course, count: 0 });
+                groups.get(key).count++;
+            }
+            const list = Array.from(groups.values()).sort((a, b) => b.count - a.count);
+            const max = list[0].count;
+            box.innerHTML = list.map((g) =>
+                '<div class="course-row">' +
+                '<span class="cname" title="' + esc(g.label) + '">' + esc(g.label) + "</span>" +
+                '<span class="bar-track"><span class="bar-fill" style="width:' + Math.round(g.count / max * 100) + '%"></span></span>' +
+                '<span class="ccount">' + g.count + "</span>" +
+                "</div>"
+            ).join("");
+        }
+
+        // ---------- validation (same rules as the C++ app) ----------
+
+        function formError(message) {
+            const box = $("form-error");
+            box.textContent = message;
+            box.classList.add("show");
+        }
+
+        function clearFormError() {
+            $("form-error").classList.remove("show");
+        }
+
+        // Returns a clean student object, or shows the error and returns null.
+        function readForm() {
+            const idRaw = $("f-id").value.trim();
+            const name = $("f-name").value.trim();
+            const ageRaw = $("f-age").value.trim();
+            const course = $("f-course").value.trim();
+
+            const id = Number(idRaw);
+            if (idRaw === "" || !Number.isInteger(id) || id <= 0) {
+                formError("[!] Enter a valid student ID (a positive whole number).");
+                return null;
+            }
+            if (name === "") { formError("[!] Name cannot be empty."); return null; }
+            if (name.includes(",")) {
+                formError("[!] Commas aren't allowed in the name — they'd break the students.txt save file.");
+                return null;
+            }
+            const age = Number(ageRaw);
+            if (ageRaw === "" || !Number.isInteger(age) || age < 1 || age > 120) {
+                formError("[!] Age must be a whole number between 1 and 120.");
+                return null;
+            }
+            if (course === "") { formError("[!] Course cannot be empty."); return null; }
+            if (course.includes(",")) {
+                formError("[!] Commas aren't allowed in the course — they'd break the students.txt save file.");
+                return null;
+            }
+            // Duplicate IDs are rejected — except the record being edited itself.
+            if (students.some((s) => s.id === id && s.id !== editingId)) {
+                formError("[!] A student with ID " + id + " already exists.");
+                return null;
+            }
+            return { id, name, age, course };
+        }
+
+        // ---------- add / edit ----------
+
+        function setFormMode() {
+            const editing = editingId !== null;
+            $("form-title").textContent = editing ? "Edit student" : "Add a student";
+            $("form-mode").textContent = editing ? "EDITING ID " + editingId : "NEW RECORD";
+            $("form-submit").textContent = editing ? "✓ Save changes" : "＋ Add student";
+            $("form-cancel").hidden = !editing;
+            $("f-id").disabled = editing; // IDs don't change, same as the C++ app
+        }
+
+        function resetForm() {
+            editingId = null;
+            $("student-form").reset();
+            $("f-id").disabled = false;
+            clearFormError();
+            setFormMode();
+        }
+
+        $("student-form").addEventListener("submit", (e) => {
+            e.preventDefault();
+            const s = readForm();
+            if (!s) return;
+            if (editingId === null) {
+                students.push(s);
+                toast("[OK] " + s.name + " (ID " + s.id + ") added.");
+            } else {
+                const i = students.findIndex((x) => x.id === editingId);
+                if (i !== -1) students[i] = s;
+                toast("[OK] Record for ID " + s.id + " updated.");
+            }
+            save();
+            const keepSearch = $("search-input").value;
+            resetForm();
+            $("search-input").value = keepSearch;
+            render();
+        });
+
+        $("form-cancel").addEventListener("click", resetForm);
+
+        // ---------- table actions (edit / delete) ----------
+
+        $("tbody").addEventListener("click", (e) => {
+            const editBtn = e.target.closest("[data-edit]");
+            const delBtn = e.target.closest("[data-del]");
+            if (editBtn) {
+                const s = students.find((x) => x.id === Number(editBtn.dataset.edit));
+                if (!s) return;
+                editingId = s.id;
+                $("f-id").value = s.id;
+                $("f-name").value = s.name;
+                $("f-age").value = s.age;
+                $("f-course").value = s.course;
+                clearFormError();
+                setFormMode();
+                $("f-name").focus();
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            }
+            if (delBtn) {
+                const s = students.find((x) => x.id === Number(delBtn.dataset.del));
+                if (!s) return;
+                pendingDelete = s;
+                $("modal-text").textContent =
+                    "Remove " + s.name + " (ID " + s.id + ", " + s.course + ") from the records? This cannot be undone.";
+                $("modal").classList.add("open");
+            }
+        });
+
+        $("modal-cancel").addEventListener("click", () => {
+            pendingDelete = null;
+            $("modal").classList.remove("open");
+        });
+
+        $("modal-confirm").addEventListener("click", () => {
+            if (!pendingDelete) return;
+            students = students.filter((s) => s.id !== pendingDelete.id);
+            if (editingId === pendingDelete.id) resetForm();
+            toast("[OK] Record deleted. " + students.length + " record(s) remain.");
+            pendingDelete = null;
+            $("modal").classList.remove("open");
+            save();
+            render();
+        });
+
+        $("modal").addEventListener("click", (e) => {
+            if (e.target === $("modal")) {
+                pendingDelete = null;
+                $("modal").classList.remove("open");
+            }
+        });
+
+        // ---------- search ----------
+
+        $("search-input").addEventListener("input", renderTable);
+        $("search-by").addEventListener("change", renderTable);
+
+        // ---------- import / export students.txt ----------
+
+        // Parses the C++ app's CSV with the same strictness as its loader:
+        // BOM tolerated, whole-number IDs/ages only, extra fields rejected,
+        // malformed lines skipped rather than crashing the import.
+        function parseStudentsTxt(text) {
+            if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+            const out = [];
+            const seen = new Set();
+            for (const rawLine of text.split(/\r?\n/)) {
+                const line = rawLine.trim();
+                if (!line) continue;
+                const parts = line.split(",");
+                if (parts.length !== 4) continue;
+                const idStr = parts[0].trim(), name = parts[1].trim();
+                const ageStr = parts[2].trim(), course = parts[3].trim();
+                if (!/^-?\d+$/.test(idStr) || !/^-?\d+$/.test(ageStr)) continue;
+                const id = parseInt(idStr, 10), age = parseInt(ageStr, 10);
+                if (!name || !course) continue;
+                if (age < 1 || age > 120) continue;
+                if (seen.has(id)) continue;
+                seen.add(id);
+                out.push({ id, name, age, course });
+            }
+            return out;
+        }
+
+        function toStudentsTxt() {
+            return sorted().map((s) => [s.id, s.name, s.age, s.course].join(",")).join("\n") + "\n";
+        }
+
+        $("import-btn").addEventListener("click", () => $("import-file").click());
+
+        $("import-file").addEventListener("change", (e) => {
+            const file = e.target.files[0];
+            e.target.value = "";
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                const parsed = parseStudentsTxt(String(reader.result || ""));
+                if (parsed.length === 0) {
+                    toast("[!] No valid records found in that file.", true);
+                    return;
+                }
+                students = parsed;
+                resetForm();
+                save();
+                render();
+                toast("[OK] Imported " + parsed.length + " student(s) from " + file.name + ".");
+            };
+            reader.readAsText(file);
+        });
+
+        $("export-btn").addEventListener("click", () => {
+            if (students.length === 0) {
+                toast("[!] Nothing to export yet.", true);
+                return;
+            }
+            const blob = new Blob([toStudentsTxt()], { type: "text/plain" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "students.txt";
+            a.click();
+            URL.revokeObjectURL(url);
+            toast("[OK] students.txt downloaded — the C++ app can read it directly.");
+        });
+
+        // ---------- go ----------
+
+        setFormMode();
+        render();
+    </script>
+</body>
+
+</html>
