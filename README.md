@@ -1,7 +1,37 @@
 # 🎓 Student Management System (C++)
 
+[![Live demo](https://img.shields.io/badge/live-pawanriko.github.io-2ea44f)](https://pawanriko.github.io/Student-Management-System/)
+![Top language](https://img.shields.io/github/languages/top/pawanriko/Student-Management-System)
+![Stars](https://img.shields.io/github/stars/pawanriko/Student-Management-System?style=social)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+[![My Skills](https://skillicons.dev/icons?i=cpp,html,css,js,git,github)](https://skillicons.dev)
+
 A robust console-based Student Management System built using C++. This project allows users to manage student records efficiently through a simple menu-driven interface while demonstrating core programming concepts such as Object-Oriented Programming, File Handling, Data Validation, and CRUD Operations.
 
+**Live (web version):** [pawanriko.github.io/Student-Management-System/](https://pawanriko.github.io/Student-Management-System/)
+
+## How it works
+
+```mermaid
+flowchart TD
+    Start([Start]) --> Load[Load records from students.txt]
+    Load --> Menu[Show menu]
+    Menu --> Choice{Choose}
+    Choice -->|1 Add| Add[Validate input → append record]
+    Choice -->|2 Search| Search[Find by ID]
+    Choice -->|3 Update| Update[Edit record]
+    Choice -->|4 Delete| Delete[Remove record]
+    Choice -->|5 View| View[List all records]
+    Choice -->|6 Exit| Save[Save to students.txt]
+    Add --> SaveFile[Save to students.txt]
+    Update --> SaveFile
+    Delete --> SaveFile
+    SaveFile --> Menu
+    Search --> Menu
+    View --> Menu
+    Save --> End([Exit])
+```
 ---
 
 ## 🚀 Features
@@ -38,6 +68,8 @@ A robust console-based Student Management System built using C++. This project a
 
 ## 🛠 Technologies Used
 
+[![My Skills](https://skillicons.dev/icons?i=cpp)](https://skillicons.dev)
+
 * C++
 * STL (Vector, Algorithm, String)
 * File Handling (`fstream`)
@@ -49,14 +81,13 @@ A robust console-based Student Management System built using C++. This project a
 ## 📂 Project Structure
 
 ```text
-student-management-system-cpp/
+Student-Management-System/
 │
-├── main.cpp
+├── StudentManagementSystem.cpp
 ├── students.txt
+├── index.html
 ├── README.md
-├── LICENSE
-├── .gitignore
-└── screenshots/
+└── LICENSE
 ```
 
 ---
@@ -115,7 +146,7 @@ Example:
 ### Compile
 
 ```bash
-g++ main.cpp -o sms
+g++ StudentManagementSystem.cpp -o sms
 ```
 
 ### Run
